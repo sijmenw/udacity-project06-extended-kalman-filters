@@ -107,10 +107,6 @@ void FusionEKF::ProcessMeasurement(const MeasurementPackage &measurement_pack) {
        * Use noise_ax = 9 and noise_ay = 9 for your Q matrix.
      */
 
-    // add dt to state transition matrix F
-    ekf_.F_(0, 2) = dt;
-    ekf_.F_(1, 3) = dt;
-
     // build Q matrix
     double dt = (measurement_pack.timestamp_ - previous_timestamp_) / 1000000; // dt in seconds
     double dt2 = dt * dt;
@@ -122,9 +118,14 @@ void FusionEKF::ProcessMeasurement(const MeasurementPackage &measurement_pack) {
     ekf_.Q_ =  MatrixXd(4, 4);
     ekf_.Q_ <<  dt4 / 4 * noise_ax, 0, dt3 / 2 * noise_ax, 0,
                 0, dt4 / 4 * noise_ay, 0, dt3 / 2 * noise_ay,
-                dt3 / 2 * noise_ax, 0, dt2 * noise_ax, 0
+                dt3 / 2 * noise_ax, 0, dt2 * noise_ax, 0,
                 0, dt3 / 2 * noise_ay, 0, dt2 * noise_ay;
 
+    // add dt to state transition matrix F
+    ekf_.F_(0, 2) = dt;
+    ekf_.F_(1, 3) = dt;
+
+    // do prediction
     ekf_.Predict();
 
     /*****************************************************************************
@@ -139,7 +140,8 @@ void FusionEKF::ProcessMeasurement(const MeasurementPackage &measurement_pack) {
 
     if (measurement_pack.sensor_type_ == MeasurementPackage::RADAR) {
         // Radar updates
-        Hj_ = Tools::CalculateJacobian(ekf_.x_);
+        Tools tools;
+        Hj_ = tools.CalculateJacobian(ekf_.x_);
         ekf_.H_ = Hj_;
         ekf_.R_ = R_radar_;
         ekf_.Update(measurement_pack.raw_measurements_);
