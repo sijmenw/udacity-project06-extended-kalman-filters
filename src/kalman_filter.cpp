@@ -69,6 +69,8 @@ void KalmanFilter::UpdateEKF(const VectorXd &z) {
       * and
       *   z = h(x') + w
     */
+    // used for radar measurements because H cannot be used and h function has to be used instead
+
     // get state values
     double px = x_(0);
     double py = x_(1);
@@ -101,8 +103,6 @@ void KalmanFilter::UpdateEKF(const VectorXd &z) {
     } else if (y(1) < -M_PI) {
         y(1) += 2 * M_PI;
     }
-
-    // used for radar measurements because H cannot be used and h function has to be used instead
 
     MatrixXd Ht = H_.transpose();
     MatrixXd S = H_ * P_ * Ht + R_;
