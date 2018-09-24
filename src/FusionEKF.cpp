@@ -66,6 +66,20 @@ void FusionEKF::ProcessMeasurement(const MeasurementPackage &measurement_pack) {
         ekf_.x_ = VectorXd(4);
         ekf_.x_ << 1, 1, 1, 1;
 
+        // state covariance matrix P
+        ekf_.P_ = MatrixXd(4, 4);
+        ekf_.P_ <<  1, 0, 0, 0,
+                    0, 1, 0, 0,
+                    0, 0, 1000, 0,
+                    0, 0, 0, 1000;
+
+        // state transition matrix F
+        ekf_.F_ = MatrixXd(4, 4);
+        ekf_.F_ <<  1, 0, 1, 0,
+                    0, 1, 0, 1,
+                    0, 0, 1, 0,
+                    0, 0, 0, 1;
+
         if (measurement_pack.sensor_type_ == MeasurementPackage::RADAR) {
             /**
             Convert radar from polar to cartesian coordinates and initialize state.
@@ -92,6 +106,7 @@ void FusionEKF::ProcessMeasurement(const MeasurementPackage &measurement_pack) {
 
         // done initializing, no need to predict or update
         is_initialized_ = true;
+        std::cout << "Init Done!\n";
         return;
     }
 
