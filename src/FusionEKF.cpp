@@ -41,6 +41,11 @@ FusionEKF::FusionEKF() {
     H_laser_ << 1, 0, 0, 0,
                 0, 1, 0, 0;
 
+    // now initialized
+    Hj_     <<  0, 0, 0, 0,
+                0, 0, 0, 0,
+                0, 0, 0, 0;
+
 }
 
 /**
@@ -74,11 +79,7 @@ void FusionEKF::ProcessMeasurement(const MeasurementPackage &measurement_pack) {
                     0, 0, 0, 1000;
 
         // state transition matrix F
-        ekf_.F_ = MatrixXd(4, 4);
-        ekf_.F_ <<  1, 0, 1, 0,
-                    0, 1, 0, 1,
-                    0, 0, 1, 0,
-                    0, 0, 0, 1;
+        ekf_.F_ = MatrixXd::Identity(4, 4);
 
         if (measurement_pack.sensor_type_ == MeasurementPackage::RADAR) {
             /**
@@ -123,7 +124,7 @@ void FusionEKF::ProcessMeasurement(const MeasurementPackage &measurement_pack) {
      */
 
     // build Q matrix
-    double dt = (measurement_pack.timestamp_ - previous_timestamp_) / 1000000; // dt in seconds
+    double dt = (measurement_pack.timestamp_ - previous_timestamp_) / 1000000.0; // dt in seconds
     double dt2 = dt * dt;
     double dt3 = dt2 * dt;
     double dt4 = dt3 * dt;
@@ -159,7 +160,7 @@ void FusionEKF::ProcessMeasurement(const MeasurementPackage &measurement_pack) {
         Hj_ = tools.CalculateJacobian(ekf_.x_);
         ekf_.H_ = Hj_;
         ekf_.R_ = R_radar_;
-        ekf_.Update(measurement_pack.raw_measurements_);
+        ekf_.UpdateEKF(measurement_pack.raw_measurements_);
     } else {
         // Laser updates
         ekf_.H_ = H_laser_;

@@ -44,12 +44,14 @@ void KalmanFilter::Update(const VectorXd &z) {
     */
 
     // this is called for lidar measurements, EKF will be used for radar
+    // to prevent duplicate calcs
+    MatrixXd Ht = H_.transpose();
+    MatrixXd PHt = P_ * Ht;
+
     VectorXd z_pred = H_ * x_;
     VectorXd y = z - z_pred;
-    MatrixXd Ht = H_.transpose();
-    MatrixXd S = H_ * P_ * Ht + R_;
+    MatrixXd S = H_ * PHt + R_;
     MatrixXd Si = S.inverse();
-    MatrixXd PHt = P_ * Ht;
     MatrixXd K = PHt * Si;
 
     //new estimate
@@ -98,16 +100,19 @@ void KalmanFilter::UpdateEKF(const VectorXd &z) {
     VectorXd y = z - H_func;  // y = z - h(x')
 
     // normalize resulting phi angle to range -pi to +pi
-    if (y(1) > M_PI) {
+    while (y(1) > M_PI) {
         y(1) -= 2 * M_PI;
-    } else if (y(1) < -M_PI) {
+    }
+    while (y(1) < -M_PI) {
         y(1) += 2 * M_PI;
     }
 
+    // to prevent duplicate calcs
     MatrixXd Ht = H_.transpose();
-    MatrixXd S = H_ * P_ * Ht + R_;
-    MatrixXd Si = S.inverse();
     MatrixXd PHt = P_ * Ht;
+
+    MatrixXd S = H_ * PHt + R_;
+    MatrixXd Si = S.inverse();
     MatrixXd K = PHt * Si;
 
     //new estimate
